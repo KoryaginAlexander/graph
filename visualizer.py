@@ -5,15 +5,20 @@ import argparse
 
 def get_commit_dependencies(repo_path, file_name):
     """
-    Получает список зависимостей (родительские коммиты) для каждого коммита, который затрагивает указанный файл.
+    Получает список зависимостей (родительские коммиты) для каждого коммита,
+    включая дату, время и автора.
     :param repo_path: Путь к репозиторию.
     :param file_name: Имя файла, для которого строится граф зависимостей.
-    :return: Список кортежей (commit_hash, [parent_hashes]).
+    :return: Список кортежей (commit_info, [parent_info]).
     """
     try:
-        # Получаем лог изменений для файла (формат: хеш коммита и хеши его родителей)
+        # Получаем лог изменений для файла с данными: хеш, родители, автор, дата
         result = subprocess.run(
-            ["git", "-C", repo_path, "log", "--pretty=format:%H %P", "--", file_name],
+            [
+                "git", "-C", repo_path, "log", 
+                "--pretty=format:%H|%P|%an|%ad",
+                "--date=short", "--", file_name
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -24,10 +29,16 @@ def get_commit_dependencies(repo_path, file_name):
 
         dependencies = []
         for line in result.stdout.strip().split("\n"):
-            parts = line.split()
-            commit = parts[0]
-            parents = parts[1:] if len(parts) > 1 else []
-            dependencies.append((commit, parents))
+            parts = line.split("|")
+            commit_hash = parts[0]
+            parents_hashes = parts[1].split() if parts[1] else []
+            author = parts[2]
+            date_time = parts[3]
+            commit_info = f"{date_time} - {author}"
+            parents_info = [
+                f"{date_time} - {author}" for parent in parents_hashes
+            ]  # Заменяем на реальный формат, если у родителей есть отдельные метаданные
+            dependencies.append((commit_info, parents_info))
 
         return dependencies
 
@@ -38,13 +49,13 @@ def get_commit_dependencies(repo_path, file_name):
 def generate_mermaid_code(dependencies):
     """
     Генерирует код Mermaid для визуализации зависимостей коммитов.
-    :param dependencies: Список зависимостей в формате (commit, [parent1, parent2, ...]).
+    :param dependencies: Список зависимостей в формате (commit_info, [parent_info]).
     :return: Строка с кодом Mermaid.
     """
     mermaid_code = "graph TD\n"
     for commit, parents in dependencies:
         for parent in parents:
-            mermaid_code += f'    {parent} --> {commit}\n'  # Указываем зависимость от родителя к коммиту
+            mermaid_code += f'    "{parent}" --> "{commit}"\n'  # Указываем зависимость от родителя к коммиту
     return mermaid_code
 
 
