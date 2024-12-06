@@ -2,7 +2,7 @@
 
 ## Commit Dependency Visualizer
 
-![Фото](https://imgur.com/dfvYZsj)
+![Фото](https://i.imgur.com/dfvYZsj.png)
 
 Этот инструмент позволяет визуализировать зависимости коммитов для заданного файла в формате **Mermaid**, который можно использовать для построения графов и диаграмм.
 
@@ -95,3 +95,7 @@ graph TD
 2. Вставьте код в блок ` ```mermaid ` в Markdown-файле или используйте Mermaid Live Editor.
 
 ---
+
+
+## Тесты 
+![Тесты](https://i.imgur.com/CpA2Q9S.png)
